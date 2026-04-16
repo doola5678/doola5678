@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { supabaseAdmin } from "@/lib/supabase";
 
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
 
@@ -45,7 +46,7 @@ const TEMPLATE_PROMPTS: Record<string, string> = {
 };
 
 export async function POST(req: NextRequest) {
-  const { title, description, content, template, systemPrompt } =
+  const { url, title, description, content, template, systemPrompt } =
     await req.json();
 
   const apiKey = process.env.OPENROUTER_API_KEY;
@@ -101,7 +102,18 @@ ${selectedTemplate}`;
     const data = await response.json();
     const proposal = data.choices?.[0]?.message?.content || "";
 
-    return NextResponse.json({ proposal });
+    // Supabase에 저장
+    const { data: saved, error: dbError } = await supabaseAdmin
+      .from("proposals")
+      .insert({ url: url || "", title, template, content: proposal })
+      .select("id")
+      .single();
+
+    if (dbError) {
+      console.error("Supabase 저장 오류:", dbError.message);
+    }
+
+    return NextResponse.json({ proposal, id: saved?.id ?? null });
   } catch (err) {
     const message = err instanceof Error ? err.message : "AI 생성 오류";
     return NextResponse.json({ error: message }, { status: 500 });
