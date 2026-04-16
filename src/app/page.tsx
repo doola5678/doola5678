@@ -47,10 +47,16 @@ export default function Home() {
 
       // 2) AI 생성
       setStep("generating");
+      const aiModel = localStorage.getItem("ai_model") || undefined;
+      const aiSystemPrompt = localStorage.getItem("ai_system_prompt") || undefined;
+      const aiTemperature = localStorage.getItem("ai_temperature")
+        ? parseFloat(localStorage.getItem("ai_temperature")!)
+        : undefined;
+
       const genRes = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url, ...scrapeData, template }),
+        body: JSON.stringify({ url, ...scrapeData, template, model: aiModel, systemPrompt: aiSystemPrompt, temperature: aiTemperature }),
       });
       const genData = await genRes.json();
       if (!genRes.ok) throw new Error(genData.error);

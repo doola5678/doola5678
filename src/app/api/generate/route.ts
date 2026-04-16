@@ -46,7 +46,7 @@ const TEMPLATE_PROMPTS: Record<string, string> = {
 };
 
 export async function POST(req: NextRequest) {
-  const { url, title, description, content, template, systemPrompt } =
+  const { url, title, description, content, template, systemPrompt, model, temperature } =
     await req.json();
 
   const apiKey = process.env.OPENROUTER_API_KEY;
@@ -81,13 +81,13 @@ ${selectedTemplate}`;
         "X-Title": "ProposalAI",
       },
       body: JSON.stringify({
-        model: "anthropic/claude-opus-4-6",
+        model: model || "anthropic/claude-opus-4-6",
         messages: [
           { role: "system", content: finalSystemPrompt },
           { role: "user", content: userMessage },
         ],
         max_tokens: 2000,
-        temperature: 0.7,
+        temperature: temperature ?? 0.7,
       }),
     });
 
